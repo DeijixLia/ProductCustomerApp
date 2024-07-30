@@ -67,7 +67,7 @@ class Program
 
     static async Task AddNewProductAsync(AppDbContext db)
     {
-        int id = 0;  // Initialize id to a default value
+        int id = 0;  
         bool idIsUnique = false;
 
         while (!idIsUnique)
@@ -118,7 +118,7 @@ class Program
 
     static async Task AddNewCustomerAsync(AppDbContext db)
     {
-        int id = 0;  // Initialize id to a default value
+        int id = 0;  
         bool idIsUnique = false;
 
         while (!idIsUnique)
