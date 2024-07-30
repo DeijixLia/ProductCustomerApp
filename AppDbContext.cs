@@ -22,11 +22,12 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.Category).HasMaxLength(100);
         });
+
         modelBuilder.Entity<Customer>(entity =>
-    {
+        {
         entity.ToTable("Customer");
         entity.Property(e => e.Id).ValueGeneratedOnAdd();
         entity.Property(e => e.Name).IsRequired();
-    });
+        });
     }
 }

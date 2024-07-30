@@ -11,201 +11,120 @@ class Program
 
     static async Task Main(string[] args)
     {
-        try
-        {
-            Console.WriteLine("Choose an option:");
-            Console.WriteLine("1. Fetch products from API");
-            Console.WriteLine("2. Save one product to database");
-            Console.WriteLine("3. Fetch customers from API");
-            Console.WriteLine("4. Save one customer to database");
+        Console.WriteLine("Choose an option:");
+        Console.WriteLine("1. Fetch products from API");
+        Console.WriteLine("2. Save products to database");
+        Console.WriteLine("3. Fetch customers from API");
+        Console.WriteLine("4. Save customers to database");
 
-            var option = Console.ReadLine();
+        var option = Console.ReadLine();
 
-            using (var db = new AppDbContext())
-            {
-                switch (option)
-                {
-                    case "1":
-                        await FetchProductsAsync();
-                        break;
-                    case "2":
-                        await SaveOneProductAsync(db);
-                        break;
-                    case "3":
-                        await FetchCustomersAsync();
-                        break;
-                    case "4":
-                        await SaveOneCustomerAsync(db);
-                        break;
-                    default:
-                        Console.WriteLine("Invalid option.");
-                        break;
-                }
-            }
-        }
-        catch (DbUpdateException dbEx)
+        using (var db = new AppDbContext())
         {
-            Console.WriteLine($"A database update error occurred: {dbEx.Message}");
-            if (dbEx.InnerException != null)
+            switch (option)
             {
-                Console.WriteLine($"Inner exception: {dbEx.InnerException.Message}");
+                case "1":
+                    await FetchProductsAsync();
+                    break;
+                case "2":
+                    await SaveProductsAsync(db);
+                    break;
+                case "3":
+                    await FetchCustomersAsync();
+                    break;
+                case "4":
+                    await SaveCustomersAsync(db);
+                    break;
+                default:
+                    Console.WriteLine("Invalid option.");
+                    break;
             }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred: {ex.Message}");
         }
     }
 
     static async Task FetchProductsAsync()
     {
-        try
-        {
-            var response = await client.GetAsync("https://eftechnical.azurewebsites.net/api/products");
+        var response = await client.GetAsync("https://eftechnical.azurewebsites.net/api/products");
 
-            if (response.IsSuccessStatusCode)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("Product API Response: " + responseBody);
-
-                
-                await System.IO.File.WriteAllTextAsync("products.json", responseBody);
-            }
-            else
-            {
-                Console.WriteLine($"Failed to fetch products. Status code: {response.StatusCode}");
-            }
-        }
-        catch (HttpRequestException httpEx)
+        if (response.IsSuccessStatusCode)
         {
-            Console.WriteLine($"HTTP Request error: {httpEx.Message}");
+            var responseBody = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Product API Response: " + responseBody);
+            await System.IO.File.WriteAllTextAsync("products.json", responseBody);
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine($"An error occurred while fetching products: {ex.Message}");
+            Console.WriteLine($"Failed to fetch products. Status code: {response.StatusCode}");
         }
     }
 
-    static async Task SaveOneProductAsync(AppDbContext db)
+    static async Task SaveProductsAsync(AppDbContext db)
     {
-        try
+        var responseBody = await System.IO.File.ReadAllTextAsync("products.json");
+        var products = JsonConvert.DeserializeObject<List<Product>>(responseBody);
+
+        if (products == null || products.Count == 0)
         {
-            var responseBody = await System.IO.File.ReadAllTextAsync("products.json");
-            var products = JsonConvert.DeserializeObject<List<Product>>(responseBody);
+            Console.WriteLine("No products found to save.");
+            return;
+        }
 
-            if (products == null || products.Count == 0)
+        foreach (var product in products)
+        {
+            if (!await db.Products.AnyAsync(p => p.Id == product.Id))
             {
-                Console.WriteLine("No products found to save.");
-                return;
-            }
-
-            Console.Write("Enter the ID of the product to save: ");
-            if (int.TryParse(Console.ReadLine(), out int productId))
-            {
-                var product = products.Find(p => p.Id == productId);
-
-                if (product == null)
-                {
-                    Console.WriteLine($"No product found with ID {productId}.");
-                    return;
-                }
-
-                if (!await db.Products.AnyAsync(p => p.Id == product.Id))
-                {
-                    db.Products.Add(product);
-                    await db.SaveChangesAsync();
-                    Console.WriteLine("Product saved to the database successfully.");
-                }
-                else
-                {
-                    Console.WriteLine($"Product with ID {product.Id} already exists.");
-                }
+                db.Products.Add(product);
             }
             else
             {
-                Console.WriteLine("Invalid ID format.");
+                Console.WriteLine($"Product with ID {product.Id} already exists.");
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred while saving the product: {ex.Message}");
-        }
+
+        await db.SaveChangesAsync();
+        Console.WriteLine("Products saved to the database successfully.");
     }
 
     static async Task FetchCustomersAsync()
     {
-        try
-        {
-            var response = await client.GetAsync("https://eftechnical.azurewebsites.net/api/customer");
+        var response = await client.GetAsync("https://eftechnical.azurewebsites.net/api/customer");
 
-            if (response.IsSuccessStatusCode)
-            {
-                var responseBody = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("Customer API Response: " + responseBody);
-
-                
-                await System.IO.File.WriteAllTextAsync("customers.json", responseBody);
-            }
-            else
-            {
-                Console.WriteLine($"Failed to fetch customers. Status code: {response.StatusCode}");
-            }
-        }
-        catch (HttpRequestException httpEx)
+        if (response.IsSuccessStatusCode)
         {
-            Console.WriteLine($"HTTP Request error: {httpEx.Message}");
+            var responseBody = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Customer API Response: " + responseBody);
+            await System.IO.File.WriteAllTextAsync("customers.json", responseBody);
         }
-        catch (Exception ex)
+        else
         {
-            Console.WriteLine($"An error occurred while fetching customers: {ex.Message}");
+            Console.WriteLine($"Failed to fetch customers. Status code: {response.StatusCode}");
         }
     }
 
-    static async Task SaveOneCustomerAsync(AppDbContext db)
+    static async Task SaveCustomersAsync(AppDbContext db)
     {
-        try
+        var responseBody = await System.IO.File.ReadAllTextAsync("customers.json");
+        var customers = JsonConvert.DeserializeObject<List<Customer>>(responseBody);
+
+        if (customers == null || customers.Count == 0)
         {
-            var responseBody = await System.IO.File.ReadAllTextAsync("customers.json");
-            var customers = JsonConvert.DeserializeObject<List<Customer>>(responseBody);
+            Console.WriteLine("No customers found to save.");
+            return;
+        }
 
-            if (customers == null || customers.Count == 0)
+        foreach (var customer in customers)
+        {
+            if (!await db.Customers.AnyAsync(c => c.Id == customer.Id))
             {
-                Console.WriteLine("No customers found to save.");
-                return;
-            }
-
-            Console.Write("Enter the ID of the customer to save: ");
-            if (int.TryParse(Console.ReadLine(), out int customerId))
-            {
-                var customer = customers.Find(c => c.Id == customerId);
-
-                if (customer == null)
-                {
-                    Console.WriteLine($"No customer found with ID {customerId}.");
-                    return;
-                }
-
-                if (!await db.Customers.AnyAsync(c => c.Id == customer.Id))
-                {
-                    db.Customers.Add(customer);
-                    await db.SaveChangesAsync();
-                    Console.WriteLine("Customer saved to the database successfully.");
-                }
-                else
-                {
-                    Console.WriteLine($"Customer with ID {customer.Id} already exists.");
-                }
+                db.Customers.Add(customer);
             }
             else
             {
-                Console.WriteLine("Invalid ID format.");
+                Console.WriteLine($"Customer with ID {customer.Id} already exists.");
             }
         }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"An error occurred while saving the customer: {ex.Message}");
-        }
-    }
 
-   
+        await db.SaveChangesAsync();
+        Console.WriteLine("Customers saved to the database successfully.");
+    }
 }
