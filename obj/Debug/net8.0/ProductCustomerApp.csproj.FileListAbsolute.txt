@@ -129,3 +129,4 @@ C:\Users\acer\Desktop\c#\ProductCustomerApp\obj\Debug\net8.0\refint\ProductCusto
 C:\Users\acer\Desktop\c#\ProductCustomerApp\obj\Debug\net8.0\ProductCustomerApp.pdb
 C:\Users\acer\Desktop\c#\ProductCustomerApp\obj\Debug\net8.0\ProductCustomerApp.genruntimeconfig.cache
 C:\Users\acer\Desktop\c#\ProductCustomerApp\obj\Debug\net8.0\ref\ProductCustomerApp.dll
+C:\Users\acer\Desktop\c#\ProductCustomerApp\obj\Debug\net8.0\ProductCustomerApp.sourcelink.json

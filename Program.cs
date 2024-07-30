@@ -51,6 +51,14 @@ class Program
                 }
             }
         }
+        catch (DbUpdateException dbEx)
+        {
+            Console.WriteLine($"A database update error occurred: {dbEx.Message}");
+            if (dbEx.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {dbEx.InnerException.Message}");
+            }
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"An error occurred: {ex.Message}");
@@ -59,7 +67,28 @@ class Program
 
     static async Task AddNewProductAsync(AppDbContext db)
     {
-        Console.WriteLine("Enter product details:");
+        int id = 0;  // Initialize id to a default value
+        bool idIsUnique = false;
+
+        while (!idIsUnique)
+        {
+            Console.WriteLine("Enter product details:");
+            Console.Write("Id: ");
+
+            if (!int.TryParse(Console.ReadLine(), out id))
+            {
+                Console.WriteLine("Invalid input. Please enter a numeric value for Id.");
+                continue;
+            }
+
+            idIsUnique = !(await db.Products.AnyAsync(p => p.Id == id));
+
+            if (!idIsUnique)
+            {
+                Console.WriteLine("An entry with this Id already exists. Please enter a different Id.");
+            }
+        }
+
         Console.Write("Title: ");
         var title = Console.ReadLine();
         Console.Write("Price: ");
@@ -69,22 +98,73 @@ class Program
         Console.Write("Category: ");
         var category = Console.ReadLine();
 
-        var product = new Product { Title = title, Price = price, Description = description, Category = category };
+        var product = new Product { Id = id, Title = title, Price = price, Description = description, Category = category };
         db.Products.Add(product);
-        await db.SaveChangesAsync();
-        Console.WriteLine("Product added successfully.");
+
+        try
+        {
+            await db.SaveChangesAsync();
+            Console.WriteLine("Product added successfully.");
+        }
+        catch (DbUpdateException dbEx)
+        {
+            Console.WriteLine($"A database update error occurred: {dbEx.Message}");
+            if (dbEx.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {dbEx.InnerException.Message}");
+            }
+        }
     }
 
     static async Task AddNewCustomerAsync(AppDbContext db)
     {
-        Console.WriteLine("Enter customer details:");
+        int id = 0;  // Initialize id to a default value
+        bool idIsUnique = false;
+
+        while (!idIsUnique)
+        {
+            Console.WriteLine("Enter customer details:");
+            Console.Write("Id: ");
+
+            if (!int.TryParse(Console.ReadLine(), out id))
+            {
+                Console.WriteLine("Invalid input. Please enter a numeric value for Id.");
+                continue;
+            }
+
+            idIsUnique = !(await db.Customers.AnyAsync(c => c.Id == id));
+
+            if (!idIsUnique)
+            {
+                Console.WriteLine("An entry with this Id already exists. Please enter a different Id.");
+            }
+        }
+
         Console.Write("Name: ");
         var name = Console.ReadLine();
 
-        var customer = new Customer { Name = name };
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Console.WriteLine("Name cannot be empty.");
+            return;
+        }
+
+        var customer = new Customer { Id = id, Name = name };
         db.Customers.Add(customer);
-        await db.SaveChangesAsync();
-        Console.WriteLine("Customer added successfully.");
+
+        try
+        {
+            await db.SaveChangesAsync();
+            Console.WriteLine("Customer added successfully.");
+        }
+        catch (DbUpdateException dbEx)
+        {
+            Console.WriteLine($"A database update error occurred: {dbEx.Message}");
+            if (dbEx.InnerException != null)
+            {
+                Console.WriteLine($"Inner exception: {dbEx.InnerException.Message}");
+            }
+        }
     }
 
     static async Task ViewAllProductsAsync(AppDbContext db)
@@ -93,7 +173,7 @@ class Program
         Console.WriteLine("Products:");
         foreach (var product in products)
         {
-            Console.WriteLine($"{product.Id} - {product.Title} - {product.Price} - {product.Description} - {product.Category}");
+            Console.WriteLine($"Id: {product.Id} - Title: {product.Title} - Price: {product.Price} - Description: {product.Description} - Category: {product.Category}");
         }
     }
 
@@ -103,7 +183,7 @@ class Program
         Console.WriteLine("Customers:");
         foreach (var customer in customers)
         {
-            Console.WriteLine($"{customer.Id} - {customer.Name}");
+            Console.WriteLine($"Id: {customer.Id} - Name: {customer.Name}");
         }
     }
 
